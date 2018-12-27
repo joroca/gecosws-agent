@@ -12,6 +12,7 @@ import subprocess
 import time
 import random
 import re
+import shutil
 
 if __name__ == '__main__':
     fp = open('/tmp/gecos-chef-client-wrapper.log', "w")
@@ -43,6 +44,56 @@ if __name__ == '__main__':
     gcc_flag_json = json.loads(content)
     url = gcc_flag_json['uri_gcc']
     node_id = gcc_flag_json['gcc_nodename']
+
+# GECOS Agent and Chef Client Autoupdate
+    new_version_available=subprocess.check_output(["aptitude","search","?and(?upgradable,?exact-name(gecos-agent))"])
+    if new_version_available:
+        fp.write("New GECOS Agent version available. Upgrading.\n")
+        subprocess.call(["apt","install","gecos-agent"]) 
+    
+    new_version_available=subprocess.check_output(["aptitude","search","?and(?upgradable,?exact-name(chef))"])
+    if new_version_available:
+        fp.write("New Chef Client version available. Upgrading before client execution.\n")
+        subprocess.call(["apt","install","chef"]) 
+
+# GEMs installation
+    fp.write("Checking installed gems\n")
+    # Required gems
+    required_gems = ['json', 'rest-client', 'activesupport', 'netaddr']
+    # Defaults
+    gembin = "/usr/bin/gem"
+    gemfile = "/etc/gemrc"
+
+    if os.path.isfile("/opt/chef/embedded/bin/gem") and not os.path.isfile("/opt/chef/embedded/etc/gemrc"):
+        # Embedded
+        gembin = "/opt/chef/embedded/bin/gem"
+        gemfile = "/opt/chef/embedded/etc/gemrc"
+
+        try:
+            os.mkdir("/opt/chef/embedded/etc/", 0755)
+            shutil.copyfile("/etc/gemrc", gemfile)
+        except OSError:
+            pass # Already directory exists
+        except IOError:
+            pass # Not /etc/gemrc
+
+    installed_gems = subprocess.check_output([
+            gembin, "list", "--no-versions", "--config-file", gemfile]).split('\n')
+
+    for gem_name in required_gems:
+        # Checking if gem installed
+        if gem_name in installed_gems:
+            continue
+
+        # Installing gem
+        retval = subprocess.call([
+            gembin, "install", gem_name, "--config-file", gemfile])
+
+        if retval: # retval != 0
+            fp.write("Error installing gem: %s\n" % gem_name)
+        else:
+            fp.write("gem installed: %s\n" % gem_name)
+
     fp.write("Connecting to GECOS Control Center api\n")
     try:
         res = requests.put(url+'/chef-client/run/', data={"node_id":node_id, "gcc_username":gcc_flag_json['gcc_username']},verify=False)
