@@ -1,3 +1,9 @@
+gecos-agent (1.2-3) trusty; urgency=low
+
+  * Hotfix: IndexError exception raised by cron job
+
+ -- Alfonso de Cala <alfonso.cala@juntadeandalucia.es>  Thu, 10 Dec 2019 12:35:39 +0200
+
 gecos-agent (1.2-2) trusty; urgency=low
 
   * Autoupdate and installing gems
