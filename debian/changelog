@@ -1,3 +1,9 @@
+gecos-agent (1.2-4) trusty; urgency=low
+
+  * Hotfix: Previous chef version with /opt/chef/embedded/etc/gemrc installed.
+
+ -- Alfonso de Cala <alfonso.cala@juntadeandalucia.es>  Thu, 24 Dec 2019 10:15:39 +0200
+
 gecos-agent (1.2-3) trusty; urgency=low
 
   * Hotfix: IndexError exception raised by cron job
