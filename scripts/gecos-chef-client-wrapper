@@ -194,7 +194,18 @@ if __name__ == '__main__':
                 fp.write("Error sending log data to GECOS Control Center: %s\n"%(res.json()['message']))
             else:
                 fp.write("Error sending log data to GECOS Control Center\n")
-            
+        try:
+          #  Release Chef node
+          res = requests.delete(url+'/chef-client/run/', data={"node_id":node_id, "gcc_username":gcc_flag_json['gcc_username']},verify=False)
+        except Exception as e:
+            fp.write("Error connecting with GECOS Control Center\n")
+            fp.write(str(e))
+            fp.close()
+            sys.exit(1)
+        if res.ok and res.json()['ok']:
+            fp.write("Node free\n")
+        else:
+            fp.write("Node not free: %s\n"%(res.json()['message']))
         fp.close()
 
 # Restarting agent if flag file (created in a chef recipe) exists
